@@ -1,0 +1,35 @@
+name: 🚀 Deploy Backend to Server
+
+on:
+  push:
+    branches:
+      - main  # Change to your deployment branch if needed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🔐 SSH to Server and Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo "🔁 Pulling latest code..."
+            cd /var/www/labbik/labbik
+
+            echo "🧹 Resetting any local changes..."
+            git reset --hard
+            git clean -fd
+            git pull origin main
+
+            echo "📦 Installing dependencies..."
+            npm install
+
+            echo "🚀 Restarting app with PM2..."
+            pm2 restart labbik || pm2 start server.js --name labbik
