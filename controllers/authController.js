@@ -20,14 +20,14 @@ const logout = async (req, res) => {
     return ele != req.token;
   });
   await user.save();
-  res.status(200).send();
+  res.status(200).send({message:"تم تسجيل الخروج بنجاح" } );
 };
 //change password when login
 const updatePassword = async (req, res) => {
   const { old_password, new_password } = req.body;
   const user = await User.findById(req.user._id);
   if (!old_password) {
-    return res.status(422).send({ message: "Old password is reqiured" });
+    return res.status(422).send({ message: "Old password is { message: "Old password is reqiured" }reqiured" });
   }
   if (!new_password) {
     return res.status(422).send({ message: "New password is reqiured" });
