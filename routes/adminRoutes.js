@@ -8,7 +8,7 @@ const {
 } = require('../controllers/admin/userAdminController');
 // const { getDashboardStats } = require('../controllers/adminController');
 const { getAllBookings } = require('../controllers/admin/bookingAdminController');
-const { getLogs } = require('../controllers/logController');
+const { getLogs ,deleteBulkLogs, deleteLog} = require('../controllers/logController');
 const { createPlan, getPlans,updatePlan,deletePlan } = require('../controllers/planController');
 
 // All routes below require admin access
@@ -31,6 +31,8 @@ router.get('/bookings', getAllBookings);
 
 // 📌 Logs (with pagination/filtering)
 router.get('/logs', getLogs);
+router.delete('/log/:id', deleteLog);
+router.delete('/logs/bulk', deleteBulkLogs);
 
 // // Admin Dashboard
 // router.get('/dashboard', getDashboardStats);

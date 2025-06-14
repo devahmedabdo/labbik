@@ -3,7 +3,6 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Make sure upload folder exists
 const uploadPath = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath);
@@ -11,11 +10,11 @@ if (!fs.existsSync(uploadPath)) {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, uploadPath);
+    cb(null, 'uploads/');
   },
   filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}-${file.fieldname}${ext}`);
+    const uniqueSuffix = Date.now() + '-' + file.fieldname + path.extname(file.originalname);
+    cb(null, uniqueSuffix);
   }
 });
 
@@ -28,10 +27,22 @@ const fileFilter = (req, file, cb) => {
     cb(new Error('Only jpeg, jpg, png, and pdf files are allowed!'));
   }
 };
+const deleteLocalFile = (url) => {
+  try {
+    if(!url) return
+    const filename = url?.split("/uploads/")[1];
+    if (filename) {
+      const filePath = path.join(__dirname, "../uploads", filename);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+  } catch (err) {
+    console.error("Failed to delete image:", err.message);
+  }
+};
 
 const upload = multer({
   storage,
   fileFilter
 });
 
-module.exports = upload;
+module.exports = {upload,deleteLocalFile};

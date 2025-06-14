@@ -1,20 +1,9 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const {
-  createPlan,
-  getPlans,
-  updatePlan,
-  deletePlan
-} = require('../controllers/planController');
+const { getSelectPlans } = require("../controllers/planController");
 
-const { protect, admin } = require('../middlewares/authMiddleware');
+const { protect } = require("../middlewares/authMiddleware");
 
-router.route('/')
-  .get(getPlans)        // Public
-  .post(protect, admin, createPlan); // Admin only
-
-router.route('/:id')
-  .put(protect, admin, updatePlan)
-  .delete(protect, admin, deletePlan);
+router.get("/select", protect, getSelectPlans);
 
 module.exports = router;

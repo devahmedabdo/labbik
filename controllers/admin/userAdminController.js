@@ -17,12 +17,10 @@ const updateUser = async (req, res) => {
   await user.save();
   res.status(201).send(user);
 };
-
 const getAllUsers = async (req, res) => {
   const users = await User.find().select("-password -role -tokens -__v");
   res.json(users);
 };
-
 const deleteUser = async (req, res) => {
   await User.findByIdAndDelete(req.params.id);
   res.status(200).send({ message: "User deleted" });

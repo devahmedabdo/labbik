@@ -6,10 +6,13 @@ const planSchema = new mongoose.Schema(
     status: { type:Boolean, default:true },
     types: [
       {
+        _id:false,
         companions: { type: Number, required: true },
         price: { type: Number, required: true },
       },
     ],
+    airline: { type: String, required: true },
+    details: { type: String},
     mecca: {
       hotel: { type: String, required: true },
       days: { type: Number, required: true },

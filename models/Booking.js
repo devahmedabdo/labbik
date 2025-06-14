@@ -18,8 +18,9 @@ const bookingSchema = new mongoose.Schema({
   phone: { type: String, required: true },
   address: { type: String, required: true },
   pass_number: { type: String, required: true },
-  pass_image: { type: String,   }, // Local file path
-  companion: [companionSchema],
+  pass_image: { type: String,default:null   }, // Local file path
+  visa: { type: String,   }, // Local file path
+  companions: [companionSchema],
   paid: { type: Number, required: true },
   total: { type: Number, required: true },
   status: {

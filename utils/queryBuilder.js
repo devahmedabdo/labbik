@@ -42,25 +42,48 @@ function buildFilter(query, extraMatch = {}) {
 
   return filter;
 }
-function buildLookups(fields) {
+function buildLookups(fieldsWithSelect) {
   const lookups = [];
 
-  for (const field of fields) {
+  for (const fieldObj of fieldsWithSelect) {
+    const fieldName = typeof fieldObj === "string" ? fieldObj : fieldObj.name;
+    const collectionName =
+      typeof fieldObj === "string"
+        ? `${fieldObj}s` // fallback: just add 's'
+        : fieldObj.from || `${fieldObj.name}s`; // allow overriding collection name
+    const select = fieldObj.select || [];
+
     lookups.push(
-      { $lookup: {
-          from: field === 'plan' ? 'plans' : `${field}s`, // you can enhance this logic
-          localField: field,
-          foreignField: '_id',
-          as: field
-        }
+      {
+        $lookup: {
+          from: collectionName,
+          let: { localId: `$${fieldName}` },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$localId"] } } },
+            ...(select.length
+              ? [
+                  {
+                    $project: select.reduce((acc, key) => ((acc[key] = 1), acc), { _id: 1 }),
+                  },
+                ]
+              : []),
+          ],
+          as: fieldName,
+        },
       },
-      { $unwind: { path: `$${field}`, preserveNullAndEmptyArrays: true } }
+      {
+        $unwind: {
+          path: `$${fieldName}`,
+          preserveNullAndEmptyArrays: true,
+        },
+      }
     );
   }
 
   return lookups;
 }
-async function getData(Model, query, extraMatch = {},populateFields=[]) {
+
+async function getData(Model, query, extraMatch = {}, populateFields = []) {
   const page = +query.page || 1;
   const limit = +query.limit || +process.env.LIMIT || 10;
   const skip = (page - 1) * limit;
@@ -69,10 +92,10 @@ async function getData(Model, query, extraMatch = {},populateFields=[]) {
   const sortField = query.sort || "createdAt";
   const sortOrder = query.order === "asc" ? 1 : -1;
   const sortOptions = { [sortField]: sortOrder };
-const lookups = buildLookups(populateFields); // dynamic lookups
+  const lookups = buildLookups(populateFields); // dynamic lookups
   const data = await Model.aggregate([
     { $match: filter },
-      ...lookups,
+    ...lookups,
     {
       $facet: {
         data: [{ $sort: sortOptions }, { $skip: skip }, { $limit: limit }],
