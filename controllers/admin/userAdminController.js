@@ -22,6 +22,7 @@ const getAllUsers = async (req, res) => {
   res.json(users);
 };
 const deleteUser = async (req, res) => {
+  if(req.user._id == req.params.id)  return res.status(409).send({ message: "you can't delete admin" });
   await User.findByIdAndDelete(req.params.id);
   res.status(200).send({ message: "User deleted" });
 };
