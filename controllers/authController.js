@@ -8,7 +8,7 @@ const login = async (req, res) => {
   try {
     const user = await User.findByCredentials(req.body.email, req.body.password);
     const token = await user.generateToken();
-    res.status(200).send({ token });
+    res.status(200).send({ token,role:user.role });
   } catch (err) {
     res.status(401).send({ message: err.message });
   }
