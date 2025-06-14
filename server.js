@@ -20,11 +20,11 @@ app.use(express.json({ limit: "10mb" }));
 // Middleware
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // serve uploaded images
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/users', userRoutes);
+app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
+app.use('/users', userRoutes);
 // app.use('/api/booking', bookingRoutes);
-app.use('/api/plans', planRoutes);
+app.use('/plans', planRoutes);
 // 
 // Error handler
 app.use(errorHandler);
