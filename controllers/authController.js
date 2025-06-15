@@ -20,7 +20,7 @@ const logout = async (req, res) => {
     return ele != req.token;
   });
   await user.save();
-  res.status(200).send({message:"تم تسجيل الخروج بنجاح" } );
+  res.status(200).send( );
 };
 //change password when login
 const updatePassword = async (req, res) => {
