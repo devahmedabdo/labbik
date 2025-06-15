@@ -1,44 +1,40 @@
 function isISODate(str) {
-  return /^\d{4}-\d{2}-\d{2}/.test(str);
+  return !isNaN(Date.parse(str));
 }
-
 function buildFilter(query, extraMatch = {}) {
   const filter = { ...extraMatch };
   const excludedFields = ["page", "limit", "sort", "order"];
+for (let key in query) {
+  // Parse keys like "createdAt[gte]"
+  const match = key.match(/^(.+)\[(.+)\]$/);
+  if (match) {
+    const field = match[1];
+    const operator = `$${match[2]}`;
+    let val = query[key];
 
-  for (const key in query) {
-    if (excludedFields.includes(key)) continue;
+    if (isISODate(val)) val = new Date(val);
+    else if (!isNaN(val)) val = +val;
+    else if (operator === '$in' && typeof val === 'string') val = val.split(',');
 
-    // Advanced filter (e.g. createdAt[gte]=...)
-    if (typeof query[key] === "object") {
-      for (const operator in query[key]) {
-        if (!filter[key]) filter[key] = {};
-        const mongoOp = `$${operator}`;
-
-        let val = query[key][operator];
-        if (isISODate(val)) val = new Date(val);
-        else if (!isNaN(val)) val = +val;
-
-        filter[key][mongoOp] = val;
-      }
-    }
-    // Boolean
-    else if (query[key] === "true" || query[key] === "false") {
-      filter[key] = query[key] === "true";
-    }
-    // Date
-    else if (isISODate(query[key])) {
-      filter[key] = new Date(query[key]);
-    }
-    // Number
-    else if (!isNaN(query[key])) {
-      filter[key] = +query[key];
-    }
-    // String (partial match)
-    else {
-      filter[key] = { $regex: query[key], $options: "i" };
-    }
+    if (!filter[field]) filter[field] = {};
+    filter[field][operator] = val;
+    continue;
   }
+
+  // Everything else (unchanged)
+  if (excludedFields.includes(key)) continue;
+
+  const val = query[key];
+  if (val === "true" || val === "false") {
+    filter[key] = val === "true";
+  } else if (isISODate(val)) {
+    filter[key] = new Date(val);
+  } else if (!isNaN(val)) {
+    filter[key] = +val;
+  } else {
+    filter[key] = { $regex: val, $options: "i" };
+  }
+}
 
   return filter;
 }
@@ -111,6 +107,7 @@ async function getData(Model, query, extraMatch = {}, populateFields = []) {
       limit,
       total: data[0].count.length ? data[0].count[0].count : 0,
     },
+    filter
   };
 }
 module.exports = getData;

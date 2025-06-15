@@ -1,27 +1,41 @@
 const User = require('../models/User');
 const Booking = require('../models/Booking');
 const Plan = require('../models/Plan');
+const Issue = require('../models/Issue');
 
 // 📊 Get Dashboard Stats
 const getDashboardStats = async (req, res) => {
-  try {
-    const totalUsers = await User.countDocuments();
-    const totalBookings = await Booking.countDocuments();
-    const totalPlans = await Plan.countDocuments();
+       const [
+            users,
+            pendingBookings,
+            paidBookings,
+            bookings,
+            inActivePlans,
+            plans,
+            inActiveIssues,
+            issues
+        ] = await Promise.all([
+            User.countDocuments(),
+            Booking.countDocuments({ status: 'pending' }),
+            Booking.countDocuments({ $expr: { $eq: ["$paid", "$total"] } }),
+            Booking.countDocuments(),
+            Plan.countDocuments({ status: false }),
+            Plan.countDocuments(),
+            Issue.countDocuments({ status: 'pending' }),
+            Issue.countDocuments()
+        ]);
 
-    const totalPaid = await Booking.aggregate([
-      { $group: { _id: null, total: { $sum: '$paid' } } }
-    ]);
-
-    res.json({
-      totalUsers,
-      totalBookings,
-      totalPlans,
-      totalPaid: totalPaid[0]?.total || 0
-    });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to load dashboard stats', error: err.message });
-  }
-};
+        res.status(200).json({
+            users,
+            pendingBookings,
+            paidBookings,
+            bookings,
+            inActivePlans,
+            plans,
+            inActiveIssues,
+            issues
+        });
+ 
+} 
 
 module.exports = { getDashboardStats };

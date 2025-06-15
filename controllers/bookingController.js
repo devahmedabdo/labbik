@@ -1,67 +1,64 @@
 const Booking = require("../models/Booking");
 const Log = require("../models/Log");
-const fs = require("fs");
-const path = require("path");
 const getData = require("../utils/queryBuilder");
 const { deleteLocalFile } = require("../middlewares/uploadMiddleware");
- 
+
 const getBookings = async (req, res) => {
-  try {
-    const data = await getData(Booking, req.query, { user: req.user._id });
-    console.log(data);
-    res.status(200).send(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
+  const data = await getData(Booking, req.query, { user: req.user._id },[{ name: "user", form: "users", select: ["name", "email"] }]);
+  res.status(200).send(data);
 };
-const createBooking = async (req, res) => {
-  try {
-    const { name, phone, address, pass_number, plan, paid, total } = req.body;
-
-    const mainImage = req.files["pass_image"]?.[0];
-    const pass_image = mainImage ? `${req.protocol}://${req.get("host")}/uploads/${mainImage.filename}` : "";
-    const companions = req.body?.companions?.map((companion, i) => {
-      const imageFile = req.files[`companions[${i}][pass_image]`]?.[0];
-      return {
-        ...companion,
-        pass_image: imageFile ? `${req.protocol}://${req.get("host")}/uploads/${imageFile.filename}` : "",
-      };
-    });
-
-    const newBooking = await Booking.create({
-      name,
-      phone,
-      address,
-      pass_number,
-      plan,
-      paid,
-      total,
-      pass_image,
-      companions,
-      user: req.user._id,
-    });
-
-    await Log.create({
-      user: req.user._id,
-      action: `Created booking for ${name}`,
-    });
-
-    res.status(201).json({
-      message: "Booking created successfully",
-      newBooking,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+const getBookingDetails = async (req, res) => {
+  const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
+  if (booking.user.toString() !== req.user._id.toString() && req.user.role != "admin") {
+    return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوي" });
   }
+  await booking.populate('user','name email _id')
+  res.status(200).send(booking);
+};
+const getAllBookings = async (req, res) => {
+  const data = await getData(Booking, req.query, {}, [{ name: "user", form: "users", select: ["name", "email"] }]);
+  res.status(200).send(data);
+};
+
+const createBooking = async (req, res) => {
+  const { name, phone, address, pass_number, plan, paid, total } = req.body;
+  const mainImage = req.files["pass_image"]?.[0];
+  const pass_image = mainImage ? `${req.protocol}://${req.get("host")}/uploads/${mainImage.filename}` : "";
+  const companions = req.body?.companions?.map((companion, i) => {
+    const imageFile = req.files[`companions[${i}][pass_image]`]?.[0];
+    return {
+      ...companion,
+      pass_image: imageFile ? `${req.protocol}://${req.get("host")}/uploads/${imageFile.filename}` : "",
+    };
+  });
+
+  const newBooking = await Booking.create({
+    name,
+    phone,
+    address,
+    pass_number,
+    plan,
+    paid,
+    total,
+    pass_image,
+    companions,
+    user: req.user._id,
+  });
+
+  await Log.create({
+    user: req.user._id,
+    booking: newBooking._id,
+    action: `حجز جديد`,
+  });
+  res.status(201).send({ success: true });
 };
 const updateBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
-    if (!booking) return res.status(404).json({ message: "Booking not found" });
+   if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
     if (booking.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Forbidden: You do not own this booking." });
+      return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوي" });
     }
     const { name = booking.name, phone = booking.phone, address = booking.address, pass_number = booking.pass_number, plan = booking.plan, paid = booking.paid, total = booking.total } = req.body;
 
@@ -118,15 +115,16 @@ const updateBooking = async (req, res) => {
     booking.total = total;
     booking.pass_image = pass_image;
     booking.companions = [...updatedCompanions, ...newCompanions];
-    booking.status = booking.visa ? 'completed':'pending'
+    booking.status = booking.visa ? "completed" : "pending";
     await booking.save();
 
     await Log.create({
       user: req.user._id,
-      action: `Updated booking for ${booking.name}`,
+      booking: booking._id,
+      action: `تحديث الحجز`,
     });
 
-    res.status(200).json({ message: "Booking updated successfully", booking });
+    res.status(200).send({ success: true });
   } catch (error) {
     console.error("Update booking error:", error);
     res.status(500).json({ message: "Server error" });
@@ -135,23 +133,23 @@ const updateBooking = async (req, res) => {
 const updateVisa = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
-    if (!booking) return res.status(404).json({ message: "Booking not found" });
+     if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
     if (booking.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Forbidden: You do not own this booking." });
+      return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوي" });
     }
     let visa = booking.visa;
     const mainImage = req.files["visa"]?.[0];
     if (mainImage) {
       deleteLocalFile(visa);
       visa = `${req.protocol}://${req.get("host")}/uploads/${mainImage.filename}`;
-      booking.visa = visa
-      booking.status = visa ? 'completed':'pending'
+      booking.visa = visa;
+      booking.status = visa ? "completed" : "pending";
     }
     await booking.save();
     await Log.create({
       user: req.user._id,
       booking: booking._id,
-      action: `تم تعديل التاشيرة`,
+      action: `تعديل التاشيرة`,
     });
 
     res.status(200).json({ message: "Booking updated successfully", booking });
@@ -163,9 +161,9 @@ const updateVisa = async (req, res) => {
 const deleteBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
-    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
     if (booking.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Forbidden: You do not own this booking." });
+      return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوي" });
     }
     // Delete main image
     if (booking.pass_image) {
@@ -182,15 +180,13 @@ const deleteBooking = async (req, res) => {
         }
       }
     }
-
     // Delete the booking itself
     await Booking.findByIdAndDelete(req.params.id);
-
     await Log.create({
       user: req.user._id,
-      action: `Deleted booking for ${booking.name}`,
+      booking: booking._id,
+      action: `حذف الحجز`,
     });
-
     res.status(200).json({ message: "Booking and related images deleted successfully" });
   } catch (error) {
     console.error("Delete booking error:", error);
@@ -198,10 +194,12 @@ const deleteBooking = async (req, res) => {
   }
 };
 
-
 module.exports = {
   createBooking,
   updateBooking,
   getBookings,
-  deleteBooking,updateVisa
+  deleteBooking,
+  updateVisa,
+  getAllBookings,
+  getBookingDetails,
 };

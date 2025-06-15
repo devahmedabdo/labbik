@@ -1,3 +1,4 @@
+const Log = require('../models/Log');
 const User = require('../models/User');
  
 
@@ -8,7 +9,11 @@ const updateUser = async (req, res) => {
     { name, email },
     { new: true, runValidators: true }
   ) 
-  res.status(200).send({ message: 'User updated successfully' }) ;
+    await Log.create({
+      user: req.user._id,
+      action: `تحديث البيانات`,
+    });
+  res.status(200).send({ success: true }) ;
 };
 
 module.exports = { updateUser  };
