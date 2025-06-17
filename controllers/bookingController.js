@@ -57,7 +57,7 @@ const updateBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
    if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
-    if (booking.user.toString() !== req.user._id.toString()) {
+    if (booking.user.toString() !== req.user._id.toString() && req.user.role != "admin") {
       return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوي" });
     }
     const { name = booking.name, phone = booking.phone, address = booking.address, pass_number = booking.pass_number, plan = booking.plan, paid = booking.paid, total = booking.total } = req.body;
@@ -134,7 +134,7 @@ const updateVisa = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
      if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
-    if (booking.user.toString() !== req.user._id.toString()) {
+    if (booking.user.toString() !== req.user._id.toString() && req.user.role != "admin" ) {
       return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوي" });
     }
     let visa = booking.visa;
@@ -162,7 +162,7 @@ const deleteBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
-    if (booking.user.toString() !== req.user._id.toString()) {
+    if (booking.user.toString() !== req.user._id.toString() && req.user.role != "admin") {
       return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوي" });
     }
     // Delete main image

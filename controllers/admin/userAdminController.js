@@ -1,5 +1,6 @@
 const User = require("../../models/User");
 const bcrypt = require("bcryptjs");
+const getData = require("../../utils/queryBuilder");
 
 const createUser = async (req, res) => {
   delete req.body.role;
@@ -18,7 +19,7 @@ const updateUser = async (req, res) => {
   res.status(201).send(user);
 };
 const getAllUsers = async (req, res) => {
-  const users = await User.find().select("-password -role -tokens -__v");
+  const users =  await getData(User,req.query,{},[],['email','name','role'])  
   res.json(users);
 };
 const deleteUser = async (req, res) => {
