@@ -21,7 +21,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             echo "🔁 Pulling latest code..."
-            cd /var/www/labbik/labbik
+            cd /var/www/labbik/
 
             echo "🧹 Resetting any local changes..."
             git reset --hard

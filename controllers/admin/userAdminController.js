@@ -19,7 +19,7 @@ const updateUser = async (req, res) => {
   res.status(201).send(user);
 };
 const getAllUsers = async (req, res) => {
-  const users =  await getData(User,req.query,{},[],['email','name','role'])  
+  const users =  await getData(User,req.query,{},[],['email' ,'role'])  
   res.json(users);
 };
 const deleteUser = async (req, res) => {
@@ -29,3 +29,4 @@ const deleteUser = async (req, res) => {
 };
 
 module.exports = { createUser, getAllUsers, deleteUser, updateUser };
+// 
