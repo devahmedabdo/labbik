@@ -1,12 +1,11 @@
 const User = require("../../models/User");
-const bcrypt = require("bcryptjs");
 const getData = require("../../utils/queryBuilder");
 
 const createUser = async (req, res) => {
   delete req.body.role;
   const { name, email, password, role = "user" } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email, password: hashedPassword, role });
+  const user =  new User({ name, email, password, role });
+  await user.save()
   res.status(201).send(user);
 };
 const updateUser = async (req, res) => {
