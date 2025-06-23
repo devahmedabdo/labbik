@@ -1,37 +1,52 @@
-// server.js
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const path = require('path');
-const dotenv = require('dotenv');
-// const path = require('path');
-const authRoutes = require('./routes/authRoutes');
-// const bookingRoutes = require('./routes/bookingRoutes');
-const adminRoutes = require('./routes/adminRoutes');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const sanitizeInput = require('./middlewares/sanitizeInputMiddleware');
+// Local
+const connectDB = require('./config/db');
 const errorHandler = require('./middlewares/errorHandler');
-const planRoutes = require('./routes/planRoutes');
+
+// Routes
+const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 const issueRoutes = require('./routes/issueRoutes');
-const cors = require("cors");
-dotenv.config();
-const connectDB = require('./config/db');
-connectDB();
-app.use(cors());
-app.use(express.json({ limit: "10mb" }));
+const planRoutes = require('./routes/planRoutes');
 
-// Middleware
-// app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // serve uploaded images
+// Connect DB
+connectDB();
+
+// Global Middleware
+// app.use(cors({ origin: ['https://your-frontend.com'], credentials: true }));
+app.use(cors());
+app.use(helmet());
+app.use(morgan('dev'));
+app.use(express.json({ limit: '10mb' }));
+ app.use(sanitizeInput);
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
+
 // Routes
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/users', userRoutes);
 app.use('/issues', issueRoutes);
-// app.use('/api/booking', bookingRoutes);
 app.use('/plans', planRoutes);
-// 
-// Error handler
-app.use(errorHandler);
-// Serve uploads folder statically
+
+// Static
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
- app.listen(process.env.PORT, () => {
-  console.log("Server is running " + process.env.PORT);
+
+// 404
+app.use((req, res) => res.status(404).json({ message: 'Not Found' }));
+
+// Error Handler
+app.use(errorHandler);
+
+// Start
+app.listen(process.env.PORT, () => {
+  console.log(`Server is running on port ${process.env.PORT}`);
 });
