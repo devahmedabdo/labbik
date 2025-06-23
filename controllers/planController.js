@@ -1,7 +1,8 @@
 const Plan = require("../models/Plan");
+const getData = require("../utils/queryBuilder");
 
 const getPlans = async (req, res) => {
-  const plans = await Plan.find();
+  const plans = await getData(Plan,req.query) 
   res.send(plans);
 };
 const getSelectPlans = async (req, res) => {
@@ -10,7 +11,7 @@ const getSelectPlans = async (req, res) => {
 };
 const createPlan = async (req, res) => {
   const { name, types, mecca, madinah, airline, details } = req.body;
-  const plan = await Plan.create({ name, types, mecca, madinah, airline, details });
+    await Plan.create({ name, types, mecca, madinah, airline, details });
   res.status(201).send({ success: true });
 };
 const updatePlan = async (req, res) => {

@@ -1,36 +1,54 @@
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
+
+const objectIdFields = ["user", "plan", "booking"];
+
 function isISODate(str) {
   return !isNaN(Date.parse(str));
 }
 function buildFilter(query, extraMatch = {}) {
   const filter = { ...extraMatch };
   const excludedFields = ["page", "limit", "sort", "order"];
+
   for (let key in query) {
-    // Parse keys like "createdAt[gte]"
     const match = key.match(/^(.+)\[(.+)\]$/);
     if (match) {
       const field = match[1];
       const operator = `$${match[2]}`;
       let val = query[key];
 
-      if (isISODate(val)) val = new Date(val);
-      else if (!isNaN(val)) val = +val;
-      else if (operator === "$in" && typeof val === "string") val = val.split(",");
+      if (isISODate(val)) {
+        if (operator === "$lte" && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+          val = new Date(new Date(val).setUTCHours(23, 59, 59, 999));
+        } else {
+          val = new Date(val);
+        }
+      } else if (!isNaN(val)) {
+        val = +val;
+      } else if (operator === "$in" && typeof val === "string") {
+        val = val.split(",");
+      }
 
       if (!filter[field]) filter[field] = {};
       filter[field][operator] = val;
       continue;
     }
 
-    // Everything else (unchanged)
     if (excludedFields.includes(key)) continue;
 
     const val = query[key];
+
     if (val === "true" || val === "false") {
       filter[key] = val === "true";
     } else if (isISODate(val)) {
       filter[key] = new Date(val);
     } else if (!isNaN(val)) {
       filter[key] = +val;
+    } else if (objectIdFields.includes(key) && mongoose.isValidObjectId(val)) {
+      filter[key] = new ObjectId(val);
+    } else if (query.equal) {
+      const [field1, field2] = query.equal.split(":");
+      filter.$expr = { $eq: [`$${field1}`, `$${field2}`] };
     } else {
       filter[key] = { $regex: val, $options: "i" };
     }
@@ -79,7 +97,7 @@ function buildLookups(fieldsWithSelect) {
   return lookups;
 }
 
-async function getData(Model, query, extraMatch = {}, populateFields = [],selectFields = [] ) {
+async function getData(Model, query, extraMatch = {}, populateFields = [], selectFields = []) {
   const page = +query.page || 1;
   const limit = +query.limit || +process.env.LIMIT || 10;
   const skip = (page - 1) * limit;
@@ -107,7 +125,6 @@ async function getData(Model, query, extraMatch = {}, populateFields = [],select
       limit,
       total: data[0].count.length ? data[0].count[0].count : 0,
     },
-    filter,
   };
 }
 module.exports = getData;
