@@ -35,14 +35,14 @@ const updatePassword = async (req, res) => {
   const { old_password, new_password } = req.body;
   const user = await User.findById(req.user._id);
   if (!old_password) {
-    return res.status(422).send({ message: "كلمة السر القديمة غير صحيحه" });
+    return res.status(422).send({ message: "حقل كلمة السر القديمة مطلوب" });
   }
   if (!new_password) {
     return res.status(422).send({ message: "حقل كلمة السر الجديده مطلوب" });
   }
   const isMatch = await bcryptjs.compare(old_password, user.password);
   if (!isMatch) {
-    return res.status(422).send({ message: "حقل كلمة السر القديمة مطلوب" });
+    return res.status(422).send({ message: "كلمة السر القديمة غير صحيحه" });
   }
   user.password = new_password;
   await user.save();
