@@ -11,7 +11,7 @@ const updateUser = async (req, res) => {
   ) 
     await Log.create({
       user: req.user._id,
-      action: `تحديث البيانات`,
+      action: `تم تحديث البيانات`,
     });
   res.status(200).send({ success: true }) ;
 };

@@ -2,12 +2,17 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { sendEmail } = require("../utils/mail");
 const bcryptjs = require("bcrypt");
+const Log = require("../models/Log");
 
 //   Login
 const login = async (req, res) => {
   try {
     const user = await User.findByCredentials(req.body.email, req.body.password);
     const token = await user.generateToken();
+    Log.create({
+      user: req.user._id,
+      action: `تم تسجيل الدخول`,
+    });
     res.status(200).send({
       token,
       user: {
@@ -24,10 +29,12 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
   console.log(21);
   const user = req.user;
-  user.tokens = user.tokens.filter((ele) => {
-    return ele != req.token;
-  });
+  user.tokens = [];
   await user.save();
+  Log.create({
+    user: req.user._id,
+    action: `تم تسجيل الخروج`,
+  });
   res.status(200).send({ message: "تم تسجيل الخروج بنجاح" });
 };
 //change password when login
@@ -46,6 +53,10 @@ const updatePassword = async (req, res) => {
   }
   user.password = new_password;
   await user.save();
+  Log.create({
+    user: req.user._id,
+    action: `تم تحديث كلمة المرور`,
+  });
   res.status(200).send({ success: true });
 };
 //change password when login
@@ -58,6 +69,10 @@ const changePassword = async (req, res) => {
   }
   user.password = req.body.new_password;
   await user.save();
+  Log.create({
+    user: req.user._id,
+    action: `تم اعادة تعيين كلمة المرور`,
+  });
   res.status(201).send({ success: true });
 };
 // 🔐 Generate and email reset token
@@ -67,6 +82,10 @@ const resetPassword = async (req, res) => {
   if (!user) return res.status(404).json({ error: "المستخدم غير موجود" });
   const token = await user.generateToken("1Hour");
   await sendEmail(user.email, process.env.URL + token);
+  Log.create({
+    user: req.user._id,
+    action: `تم طلب اعادة تعيين كلمة المرور`,
+  });
   res.status(200).send({ success: true });
 };
 
