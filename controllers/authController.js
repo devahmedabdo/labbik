@@ -10,7 +10,7 @@ const login = async (req, res) => {
     const user = await User.findByCredentials(req.body.email, req.body.password);
     const token = await user.generateToken();
     Log.create({
-      user: req.user._id,
+      user: user._id,
       action: `تم تسجيل الدخول`,
     });
     res.status(200).send({
@@ -27,12 +27,11 @@ const login = async (req, res) => {
 };
 //   logout
 const logout = async (req, res) => {
-  console.log(21);
   const user = req.user;
   user.tokens = [];
   await user.save();
   Log.create({
-    user: req.user._id,
+    user: user._id,
     action: `تم تسجيل الخروج`,
   });
   res.status(200).send({ message: "تم تسجيل الخروج بنجاح" });
@@ -70,7 +69,7 @@ const changePassword = async (req, res) => {
   user.password = req.body.new_password;
   await user.save();
   Log.create({
-    user: req.user._id,
+    user: user._id,
     action: `تم اعادة تعيين كلمة المرور`,
   });
   res.status(201).send({ success: true });
@@ -83,7 +82,7 @@ const resetPassword = async (req, res) => {
   const token = await user.generateToken("1Hour");
   await sendEmail(user.email, process.env.URL + token);
   Log.create({
-    user: req.user._id,
+    user: user._id,
     action: `تم طلب اعادة تعيين كلمة المرور`,
   });
   res.status(200).send({ success: true });
