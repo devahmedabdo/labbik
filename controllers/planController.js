@@ -11,8 +11,8 @@ const getSelectPlans = async (req, res) => {
 };
 const createPlan = async (req, res) => {
   const { name, types, mecca, madinah, airline, details } = req.body;
-    await Plan.create({ name, types, mecca, madinah, airline, details });
-  res.status(201).send({ success: true });
+   const plan  = await Plan.create({ name, types, mecca, madinah, airline, details });
+  res.status(201).send({ success: true,plan });
 };
 const updatePlan = async (req, res) => {
   const plan = await Plan.findById(req.params.id);
