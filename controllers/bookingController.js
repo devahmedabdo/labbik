@@ -4,7 +4,7 @@ const getData = require("../utils/queryBuilder");
 const { deleteLocalFile } = require("../middlewares/uploadMiddleware");
 
 const getBookings = async (req, res) => {
-  const data = await getData(Booking, req.query, { user: req.user._id },[{ name: "user", form: "users", select: ["name", "email"] }]);
+  const data = await getData(Booking, req.query, { user: req.user._id },[{ name: "user", form: "users", select: ["name", "email"] },{ name: "plan", form: "plans", select: ["name"] }]);
   res.status(200).send(data);
 };
 const getBookingDetails = async (req, res) => {
@@ -17,7 +17,7 @@ const getBookingDetails = async (req, res) => {
   res.status(200).send(booking);
 };
 const getAllBookings = async (req, res) => {
-  const data = await getData(Booking, req.query, {}, [{ name: "user", form: "users", select: ["name", "email"] }]);
+  const data = await getData(Booking, req.query, {}, [{ name: "user", form: "users", select: ["name", "email"] },{ name: "plan", form: "plans", select: ["name"] }]);
   res.status(200).send(data);
 };
 

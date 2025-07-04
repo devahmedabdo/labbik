@@ -4,7 +4,7 @@ const { protect } = require("../middlewares/authMiddleware");
 const { createBooking, updateBooking, deleteBooking, getBookings, updateVisa, getBookingDetails } = require("../controllers/bookingController");
 const { updateUser } = require("../controllers/userController");
 const { upload } = require("../middlewares/uploadMiddleware");
-const { createPlan, updatePlan, getPlans, deletePlan } = require("../controllers/planController");
+const { createPlan, updatePlan, deletePlan, getUserPlans } = require("../controllers/planController");
 
 const companionFields = Array.from({ length: 10 }).map((_, i) => ({
   name: `companions[${i}][pass_image]`,
@@ -12,7 +12,7 @@ const companionFields = Array.from({ length: 10 }).map((_, i) => ({
 }));
 router.use(protect);
 router.post("/plans", createPlan);
-router.get("/plans", getPlans);
+router.get("/plans", getUserPlans);
 router.delete("/plans/:id", deletePlan);
 router.patch("/plans/:id", updatePlan);
 

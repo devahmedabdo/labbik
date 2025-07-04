@@ -5,7 +5,7 @@ const getData = require("../../utils/queryBuilder");
 const createIssue = async (req, res) => {
   const booking = await Booking.findOne({ phone: req.body.phone });
   if (!booking) return res.status(409).send({ message: "رقم الهاتف هذا غير مسجل لدينا برجاء كتابة رقم الهاتف الموجود ببيانات الحجز" });
-  req.body.booking = booking;
+  req.body.booking = booking._id;
   await Issue.create(req.body);
   res.status(201).send({ success: true });
 };
