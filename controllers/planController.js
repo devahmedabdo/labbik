@@ -6,7 +6,7 @@ const getPlans = async (req, res) => {
   res.send(plans);
 };
 const getUserPlans = async (req, res) => {
-  const data = await getData(Booking, req.query, { user: req.user._id }, [{ name: "user", form: "users", select: ["name", "email"] }]);
+  const data = await getData(Plan, req.query, { user: req.user._id }, [{ name: "user", form: "users", select: ["name", "email"] }]);
   res.status(200).send(data);
 };
 const getSelectPlans = async (req, res) => {
