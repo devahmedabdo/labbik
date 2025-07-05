@@ -2,11 +2,11 @@ const Plan = require("../models/Plan");
 const getData = require("../utils/queryBuilder");
 
 const getPlans = async (req, res) => {
-  const plans = await getData(Plan, req.query);
+  const plans = await getData(Plan, req.query,{},[{ name: "user", form: "users", select: ["name", "email"] }]);
   res.send(plans);
 };
 const getUserPlans = async (req, res) => {
-  const data = await getData(Plan, req.query, { user: req.user._id }, [{ name: "user", form: "users", select: ["name", "email"] }]);
+  const data = await getData(Plan, req.query, { user: req.user._id } );
   res.status(200).send(data);
 };
 const getSelectPlans = async (req, res) => {
