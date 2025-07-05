@@ -38,7 +38,7 @@ app.use('/issues', issueRoutes);
 app.use('/plans', planRoutes);
 
 // Static
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static('/var/www/labbik/uploads'));
 
 // 404
 app.use((req, res) => res.status(404).json({ message: 'Not Found' }));
