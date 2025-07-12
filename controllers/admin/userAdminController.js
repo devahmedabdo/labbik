@@ -26,7 +26,7 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    req.body?.super =true;
+    // req.body?.super =true;
 
     const user = await User.findById(req.params.id);
     
