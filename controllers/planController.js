@@ -28,12 +28,18 @@ const updatePlan = async (req, res) => {
   res.status(200).send({ success: true });
 };
 const deletePlan = async (req, res) => {
-  const plan = await Plan.findByIdAndDelete(req.params.id);
-  if (plan.user.toString() !== req.user._id.toString() && req.user.role != "admin") {
-    return res.status(403).json({ message: "ليس لديك صلاحية لحذف هذا المحتوي" });
+
+  try{
+    const plan = await Plan.findByIdAndDelete(req.params.id);
+    if (plan.user.toString() !== req.user._id.toString() && req.user.role != "admin") {
+      return res.status(403).json({ message: "ليس لديك صلاحية لحذف هذا المحتوي" });
+    }
+    if (!plan) return res.status(404).send({ message: "الباقه غير موجوده" });
+    res.status(200).send({ success: true });
+
+  }catch(e){
+    console.log(e)
   }
-  if (!plan) return res.status(404).send({ message: "الباقه غير موجوده" });
-  res.status(200).send({ success: true });
 };
 module.exports = {
   createPlan,

@@ -13,6 +13,7 @@ mongoose
       email: "devahmedabdo@gmail.com",
       name: "ahmed abdo",
       role: "admin",
+      super: true,
     });
     await admin.save();
     console.error("succsefull creat initial data:");

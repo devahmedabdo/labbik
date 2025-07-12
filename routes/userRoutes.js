@@ -4,17 +4,17 @@ const { protect } = require("../middlewares/authMiddleware");
 const { createBooking, updateBooking, deleteBooking, getBookings, updateVisa, getBookingDetails } = require("../controllers/bookingController");
 const { updateUser } = require("../controllers/userController");
 const { upload } = require("../middlewares/uploadMiddleware");
-const { createPlan, updatePlan, deletePlan, getUserPlans } = require("../controllers/planController");
+// const { createPlan, updatePlan, deletePlan, getUserPlans } = require("../controllers/planController");
 
 const companionFields = Array.from({ length: 10 }).map((_, i) => ({
   name: `companions[${i}][pass_image]`,
   maxCount: 1,
 }));
 router.use(protect);
-router.post("/plans", createPlan);
-router.get("/plans", getUserPlans);
-router.delete("/plans/:id", deletePlan);
-router.patch("/plans/:id", updatePlan);
+// router.post("/plans", createPlan);
+// router.get("/plans", getUserPlans);
+// router.delete("/plans/:id", deletePlan);
+// router.patch("/plans/:id", updatePlan);
 
 router.post("/bookings", upload.fields([{ name: "pass_image", maxCount: 1 }, ...companionFields]), createBooking);
 router.patch("/bookings/:id", upload.fields([{ name: "pass_image", maxCount: 1 }, ...companionFields]), updateBooking);
