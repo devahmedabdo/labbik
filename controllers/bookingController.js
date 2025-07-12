@@ -2,27 +2,42 @@ const Booking = require("../models/Booking");
 const Log = require("../models/Log");
 const getData = require("../utils/queryBuilder");
 const { deleteLocalFile } = require("../middlewares/uploadMiddleware");
-
+const { nanoid } = require("nanoid");
 const getBookings = async (req, res) => {
-  const data = await getData(Booking, req.query, { user: req.user._id },[{ name: "user", form: "users", select: ["name", "email"] },{ name: "plan", form: "plans", select: ["name"] }]);
+  const data = await getData(Booking, req.query, { user: req.user._id }, [
+    { name: "user", form: "users", select: ["name", "email"] },
+    { name: "plan", form: "plans", select: ["name"] },
+  ]);
   res.status(200).send(data);
 };
 const getBookingDetails = async (req, res) => {
   const booking = await Booking.findById(req.params.id);
-    if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
+  if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
   if (booking.user.toString() !== req.user._id.toString() && req.user.role != "admin") {
     return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوي" });
   }
-  await booking.populate('user','name email _id')
+  await booking.populate("user", "name email _id");
   res.status(200).send(booking);
 };
+const clinetBookingDetails = async (req, res) => {
+  console.log(req.params)
+  const booking = await Booking.findOne({ publicToken: req.params.token });
+  if (!booking) return res.status(404).send({ message: "الحجز غير موجود" });
+
+  // أرسل فقط البيانات التي تريد العميل يراها
+  res.send( booking);
+};
 const getAllBookings = async (req, res) => {
-  const data = await getData(Booking, req.query, {}, [{ name: "user", form: "users", select: ["name", "email"] },{ name: "plan", form: "plans", select: ["name"] }]);
+  const data = await getData(Booking, req.query, {}, [
+    { name: "user", form: "users", select: ["name", "email"] },
+    { name: "plan", form: "plans", select: ["name"] },
+  ]);
   res.status(200).send(data);
 };
 
 const createBooking = async (req, res) => {
-  const { name, phone, address, pass_number, plan, paid, total } = req.body;
+  const { name, phone, address, pass_number, plan, paid, total,customPlan } = req.body;
+  console.log('asd  ',customPlan)
   const mainImage = req.files["pass_image"]?.[0];
   const pass_image = mainImage ? `${req.protocol}://${req.get("host")}/uploads/${mainImage.filename}` : "";
   const companions = req.body?.companions?.map((companion, i) => {
@@ -32,17 +47,19 @@ const createBooking = async (req, res) => {
       pass_image: imageFile ? `${req.protocol}://${req.get("host")}/uploads/${imageFile.filename}` : "",
     };
   });
-
+  const publicToken = nanoid(16);
   const newBooking = await Booking.create({
     name,
     phone,
     address,
     pass_number,
     plan,
+    customPlan:customPlan,
     paid,
     total,
     pass_image,
     companions,
+    publicToken,
     user: req.user._id,
   });
 
@@ -51,18 +68,18 @@ const createBooking = async (req, res) => {
     booking: newBooking._id,
     action: `حجز جديد`,
   });
-  res.status(201).send({ success: true });
+  res.status(201).send(newBooking);
 };
 const updateBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
-   if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
+    if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
     if (booking.user.toString() !== req.user._id.toString() && req.user.role != "admin") {
       return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوي" });
     }
-    const { name = booking.name, phone = booking.phone, address = booking.address, pass_number = booking.pass_number, plan = booking.plan, paid = booking.paid, total = booking.total } = req.body;
+    const { name = booking.name, customPlan = booking.customPlan,phone = booking.phone, address = booking.address, pass_number = booking.pass_number, plan = booking.plan, paid = booking.paid, total = booking.total } = req.body;
 
-    // Replace main pass image if new file sent
+    // Replace main pass image if new file sent customPlan
     let pass_image = booking.pass_image;
     const mainImage = req.files["pass_image"]?.[0];
     if (mainImage) {
@@ -74,8 +91,8 @@ const updateBooking = async (req, res) => {
     const incomingCompanions = req.body?.companions;
     const updatedCompanions = [];
     const newCompanions = [];
-
-    for (let i = 0; i < incomingCompanions.length; i++) {
+    console.log(incomingCompanions)
+    for (let i = 0; i < incomingCompanions?.length; i++) {
       const comp = incomingCompanions[i];
       const imageFile = req.files?.[`companions[${i}][pass_image]`]?.[0];
 
@@ -111,6 +128,7 @@ const updateBooking = async (req, res) => {
     booking.address = address;
     booking.pass_number = pass_number;
     booking.plan = plan;
+    booking.customPlan = customPlan;
     booking.paid = paid;
     booking.total = total;
     booking.pass_image = pass_image;
@@ -133,8 +151,8 @@ const updateBooking = async (req, res) => {
 const updateVisa = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
-     if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
-    if (booking.user.toString() !== req.user._id.toString() && req.user.role != "admin" ) {
+    if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
+    if (booking.user.toString() !== req.user._id.toString() && req.user.role != "admin") {
       return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوي" });
     }
     let visa = booking.visa;
@@ -196,7 +214,7 @@ const deleteBooking = async (req, res) => {
 
 module.exports = {
   createBooking,
-  updateBooking,
+  updateBooking,clinetBookingDetails,
   getBookings,
   deleteBooking,
   updateVisa,

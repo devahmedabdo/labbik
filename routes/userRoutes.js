@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { protect } = require("../middlewares/authMiddleware");
-const { createBooking, updateBooking, deleteBooking, getBookings, updateVisa, getBookingDetails } = require("../controllers/bookingController");
+const { createBooking, updateBooking, deleteBooking, getBookings, updateVisa, getBookingDetails, clinetBookingDetails } = require("../controllers/bookingController");
 const { updateUser } = require("../controllers/userController");
 const { upload } = require("../middlewares/uploadMiddleware");
 // const { createPlan, updatePlan, deletePlan, getUserPlans } = require("../controllers/planController");
@@ -22,6 +22,7 @@ router.put("/bookings/:id", upload.fields([{ name: "visa", maxCount: 1 }]), upda
 router.delete("/bookings/:id", deleteBooking);
 router.get("/booking/:id", getBookingDetails);
 router.get("/bookings", getBookings);
+router.get("/bookings/client/:token", clinetBookingDetails);
 
 router.patch("/", updateUser);
 

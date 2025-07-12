@@ -7,25 +7,31 @@ const companionSchema = new mongoose.Schema({
   pass_number: { type: String, required: true },
   pass_image: { type: String }, // Local file path
 });
-const customPlan = new mongoose.Schema({
-  mecca: {
-    hotel: { type: String, required: true },
-    days: { type: Number, required: true },
+const customPlan = new mongoose.Schema(
+  {
+    mecca: {
+      hotel: { type: String, required: true },
+      days: { type: Number, required: true },
+    },
+    madinah: {
+      hotel: { type: String, required: true },
+      days: { type: Number, required: true },
+    },
+    airline: { type: String, required: true },
   },
-  madinah: {
-    hotel: { type: String, required: true },
-    days: { type: Number, required: true },
-  },
-  total: { type: Number, required: true },
-  paid: { type: Number, required: true },
-});
+  { _id: false }
+);
 
 const bookingSchema = new mongoose.Schema(
   {
     plan: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Plan",
-      required: true,
+      // required: true,
+    },
+    customPlan: {
+      type: customPlan,
+      required: false,
     },
     name: { type: String, required: true },
     phone: { type: String, required: true },
@@ -35,6 +41,7 @@ const bookingSchema = new mongoose.Schema(
     visa: { type: String }, // Local file path
     companions: [companionSchema],
     paid: { type: Number, required: true },
+    publicToken: { type: String, required: true },
     total: { type: Number, required: true },
     status: {
       type: String,

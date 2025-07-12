@@ -12,7 +12,7 @@ const isSuper = (logged, targetUser) => {
 
 const createUser = async (req, res) => {
   try {
-    delete req.body?.super;
+    delete req.body.super;
     const { name, email, password, role } = req.body;
 
     const user = new User({ name, email, password, role });
@@ -26,14 +26,10 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    // req.body?.super =true;
-
+      delete req.body.super;
     const user = await User.findById(req.params.id);
-    
     if (!user) return res.status(404).send({ message: "المستخدم غير موجود" });
-
-    // isSuper(req.user, user);
-user.super = true
+    isSuper(req.user, user);
     Object.assign(user, req.body);
     await user.save();
 
@@ -45,7 +41,7 @@ user.super = true
 
 const getAllUsers = async (req, res) => {
   try {
-    const users = await getData(User, {...req.query,order:'dsc',sort:'super'}, {}, [], ["email", "name", "role"]);
+    const users = await getData(User, { ...req.query, order: "desc", sort: "super" }, {}, [], ["email", "name",  "role"]);
     res.json(users);
   } catch (err) {
     res.status(500).send({ message: err.message || "فشل في جلب المستخدمين" });
