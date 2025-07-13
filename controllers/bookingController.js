@@ -23,6 +23,7 @@ const getBookingDetails = async (req, res) => {
 const clinetBookingDetails = async (req, res) => {
   console.log(req.params)
   const booking = await Booking.findOne({ publicToken: req.params.token });
+  await booking.populate('plan')
   if (!booking) return res.status(404).send({ message: "الحجز غير موجود" });
 
   // أرسل فقط البيانات التي تريد العميل يراها
