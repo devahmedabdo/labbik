@@ -2,6 +2,8 @@ const Booking = require("../models/Booking");
 const Log = require("../models/Log");
 const getData = require("../utils/queryBuilder");
 const { deleteLocalFile } = require("../middlewares/uploadMiddleware");
+const { nanoid } = require('nanoid');  
+
 const getBookings = async (req, res) => {
   const data = await getData(Booking, req.query, { user: req.user._id }, [
     { name: "user", form: "users", select: ["name", "email"] },
@@ -45,7 +47,6 @@ const createBooking = async (req, res) => {
       pass_image: imageFile ? `${req.protocol}://${req.get("host")}/uploads/${imageFile.filename}` : "",
     };
   });
-  const { nanoid } = await import('nanoid');
   const publicToken = nanoid(16);
   const newBooking = await Booking.create({
     name,
