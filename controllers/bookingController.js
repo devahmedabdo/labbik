@@ -2,12 +2,12 @@ const Booking = require("../models/Booking");
 const Log = require("../models/Log");
 const getData = require("../utils/queryBuilder");
 const { deleteLocalFile } = require("../middlewares/uploadMiddleware");
-const { nanoid } = require('nanoid');  
+const { nanoid } = require("nanoid");
 
 const getBookings = async (req, res) => {
   const data = await getData(Booking, req.query, { user: req.user._id }, [
     { name: "user", form: "users", select: ["name", "email"] },
-    { name: "plan", form: "plans", select: ["name"] },
+    { name: "plan", form: "plans", select: ["name","mecca","madinah","airline"] },
   ]);
   res.status(200).send(data);
 };
@@ -21,24 +21,24 @@ const getBookingDetails = async (req, res) => {
   res.status(200).send(booking);
 };
 const clinetBookingDetails = async (req, res) => {
-  console.log(req.params)
+  console.log(req.params);
   const booking = await Booking.findOne({ publicToken: req.params.token });
-  await booking.populate('plan')
+  await booking.populate("plan user");
   if (!booking) return res.status(404).send({ message: "الحجز غير موجود" });
 
   // أرسل فقط البيانات التي تريد العميل يراها
-  res.send( booking);
+  res.send(booking);
 };
 const getAllBookings = async (req, res) => {
   const data = await getData(Booking, req.query, {}, [
     { name: "user", form: "users", select: ["name", "email"] },
-    { name: "plan", form: "plans", select: ["name"] },
+    { name: "plan", form: "plans", select: ["name","mecca","madinah","airline"] },
   ]);
   res.status(200).send(data);
 };
 
 const createBooking = async (req, res) => {
-  const { name, phone, address, pass_number, plan, paid, total,customPlan } = req.body;
+  const { name, phone, address, pass_number, plan, paid, total, customPlan } = req.body;
   const mainImage = req.files["pass_image"]?.[0];
   const pass_image = mainImage ? `${req.protocol}://${req.get("host")}/uploads/${mainImage.filename}` : "";
   const companions = req.body?.companions?.map((companion, i) => {
@@ -55,7 +55,7 @@ const createBooking = async (req, res) => {
     address,
     pass_number,
     plan,
-    customPlan:customPlan,
+    customPlan: customPlan,
     paid,
     total,
     pass_image,
@@ -78,7 +78,16 @@ const updateBooking = async (req, res) => {
     if (booking.user.toString() !== req.user._id.toString() && req.user.role != "admin") {
       return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوي" });
     }
-    const { name = booking.name, customPlan = booking.customPlan,phone = booking.phone, address = booking.address, pass_number = booking.pass_number, plan = booking.plan, paid = booking.paid, total = booking.total } = req.body;
+    const {
+      name = booking.name,
+      customPlan = booking.customPlan,
+      phone = booking.phone,
+      address = booking.address,
+      pass_number = booking.pass_number,
+      plan = booking.plan,
+      paid = booking.paid,
+      total = booking.total,
+    } = req.body;
 
     // Replace main pass image if new file sent customPlan
     let pass_image = booking.pass_image;
@@ -92,7 +101,7 @@ const updateBooking = async (req, res) => {
     const incomingCompanions = req.body?.companions;
     const updatedCompanions = [];
     const newCompanions = [];
-    console.log(incomingCompanions)
+    console.log(incomingCompanions);
     for (let i = 0; i < incomingCompanions?.length; i++) {
       const comp = incomingCompanions[i];
       const imageFile = req.files?.[`companions[${i}][pass_image]`]?.[0];
@@ -152,31 +161,55 @@ const updateBooking = async (req, res) => {
 const updateVisa = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
-    if (!booking) return res.status(404).json({ message: "الحجز غير موجود" });
-    if (booking.user.toString() !== req.user._id.toString() && req.user.role != "admin") {
-      return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوي" });
+    if (!booking) {
+      return res.status(404).json({ message: "الحجز غير موجود" });
     }
-    let visa = booking.visa;
-    const mainImage = req.files["visa"]?.[0];
-    if (mainImage) {
-      deleteLocalFile(visa);
-      visa = `${req.protocol}://${req.get("host")}/uploads/${mainImage.filename}`;
-      booking.visa = visa;
-      booking.status = visa ? "completed" : "pending";
+
+    if (booking.user.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+      return res.status(403).json({ message: "ليس لديك صلاحية لعرض هذا المحتوى" });
     }
+
+    // ✅ تحديث التأشيرة الرئيسية
+    const mainVisaFile = req.files["visa"]?.[0];
+    if (mainVisaFile) {
+      deleteLocalFile(booking.visa);
+      booking.visa = `${req.protocol}://${req.get("host")}/uploads/${mainVisaFile.filename}`;
+      booking.status = "completed";
+    }
+
+    // ✅ تحديث تأشيرات المرافقين
+    if (Array.isArray(booking.companions)) {
+      for (let i = 0; i < booking.companions.length; i++) {
+        const fieldName = `companions[${i}][visa]`;
+        const companionVisaFile = req.files[fieldName]?.[0];
+
+        if (companionVisaFile) {
+          const companion = booking.companions[i];
+
+          if (companion.visa) {
+            deleteLocalFile(companion.visa);
+          }
+
+          companion.visa = `${req.protocol}://${req.get("host")}/uploads/${companionVisaFile.filename}`;
+        }
+      }
+    }
+
     await booking.save();
+
     await Log.create({
       user: req.user._id,
       booking: booking._id,
-      action: `تعديل التاشيرة`,
+      action: `تحديث التأشيرة`,
     });
 
-    res.status(200).json({ message: "Booking updated successfully", booking });
+    res.status(200).json({ message: "تم تحديث التأشيرات بنجاح", booking });
   } catch (error) {
-    console.error("Update booking error:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("خطأ أثناء تحديث التأشيرات:", error);
+    res.status(500).json({ message: "حدث خطأ في الخادم" });
   }
 };
+
 const deleteBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
@@ -197,6 +230,9 @@ const deleteBooking = async (req, res) => {
         if (comp.pass_image) {
           deleteLocalFile(comp.pass_image);
         }
+        if (comp.visa) {
+          deleteLocalFile(comp.visa); // ✅ delete visa file too
+        }
       }
     }
     // Delete the booking itself
@@ -215,7 +251,8 @@ const deleteBooking = async (req, res) => {
 
 module.exports = {
   createBooking,
-  updateBooking,clinetBookingDetails,
+  updateBooking,
+  clinetBookingDetails,
   getBookings,
   deleteBooking,
   updateVisa,

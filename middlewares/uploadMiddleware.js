@@ -24,7 +24,7 @@ const fileFilter = (req, file, cb) => {
   if (isAllowed) {
     cb(null, true);
   } else {
-    cb(new Error('Only jpeg, jpg, png, and pdf files are allowed!'));
+    cb(new Error({message:'صيغة الصورة غير مدعومه'}));
   }
 };
 const deleteLocalFile = (url) => {
@@ -36,7 +36,7 @@ const deleteLocalFile = (url) => {
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     }
   } catch (err) {
-    console.error("Failed to delete image:", err.message);
+    console.error({message:'خطأ اثناء حذف الصوره القديمة'});
   }
 };
 

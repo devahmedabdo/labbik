@@ -6,6 +6,7 @@ const companionSchema = new mongoose.Schema({
   address: { type: String, required: true },
   pass_number: { type: String, required: true },
   pass_image: { type: String }, // Local file path
+  visa: { type: String },
 });
 const customPlan = new mongoose.Schema(
   {
