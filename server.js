@@ -17,7 +17,6 @@ const adminRoutes = require("./routes/adminRoutes");
 const userRoutes = require("./routes/userRoutes");
 const issueRoutes = require("./routes/issueRoutes");
 const planRoutes = require("./routes/planRoutes");
-const Booking = require("./models/Booking");
 
 // Connect DB
 connectDB();
@@ -37,30 +36,7 @@ app.use("/admin", adminRoutes);
 app.use("/users", userRoutes);
 app.use("/issues", issueRoutes);
 app.use("/plans", planRoutes);
-app.router.get("/mapping", async (req, res) => {
-  const booking = await Booking.find();
-  for (let i = 0; i < booking.length; i++) {
-    if (booking[i].visa) {
-      booking[i].visa = booking[i].visa.replace("http://31.97.155.136", "");
-    }
-    if (booking[i].pass_image) {
-      booking[i].pass_image = booking[i].pass_image.replace("http://31.97.155.136", "");
-    }
-    if (booking[i].companions.length) {
-      booking[i].companions.forEach((com) => {
-        if (com.visa) {
-          com.visa = com.visa.replace("http://31.97.155.136", "");
-        }
-        if (com.pass_image) {
-          com.pass_image = com.pass_image.replace("http://31.97.155.136", "");
-        }
-      });
-    }
-    await booking[i].save()
-  }
-  
-  res.status(201).send(booking);
-});
+ 
 // Static
 app.use("/uploads", express.static("/var/www/labbik/uploads"));
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
