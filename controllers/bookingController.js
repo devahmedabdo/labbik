@@ -40,12 +40,12 @@ const getAllBookings = async (req, res) => {
 const createBooking = async (req, res) => {
   const { name, phone, address, pass_number, plan, paid, total, customPlan } = req.body;
   const mainImage = req.files["pass_image"]?.[0];
-  const pass_image = mainImage ? `${req.protocol}://${req.get("host")}/uploads/${mainImage.filename}` : "";
+  const pass_image = mainImage ? `/uploads/${mainImage.filename}` : "";
   const companions = req.body?.companions?.map((companion, i) => {
     const imageFile = req.files[`companions[${i}][pass_image]`]?.[0];
     return {
       ...companion,
-      pass_image: imageFile ? `${req.protocol}://${req.get("host")}/uploads/${imageFile.filename}` : "",
+      pass_image: imageFile ? `/uploads/${imageFile.filename}` : "",
     };
   });
   const publicToken = nanoid(16);
@@ -94,7 +94,7 @@ const updateBooking = async (req, res) => {
     const mainImage = req.files["pass_image"]?.[0];
     if (mainImage) {
       deleteLocalFile(pass_image);
-      pass_image = `${req.protocol}://${req.get("host")}/uploads/${mainImage.filename}`;
+      pass_image = `/uploads/${mainImage.filename}`;
     }
 
     // Companions
@@ -112,7 +112,7 @@ const updateBooking = async (req, res) => {
         if (existing) {
           if (imageFile) {
             deleteLocalFile(existing.pass_image);
-            existing.pass_image = `${req.protocol}://${req.get("host")}/uploads/${imageFile.filename}`;
+            existing.pass_image = `/uploads/${imageFile.filename}`;
           }
           existing.name = comp.name || existing.name;
           existing.phone = comp.phone || existing.phone;
@@ -127,7 +127,7 @@ const updateBooking = async (req, res) => {
           phone: comp.phone,
           address: comp.address,
           pass_number: comp.pass_number,
-          pass_image: imageFile ? `${req.protocol}://${req.get("host")}/uploads/${imageFile.filename}` : "",
+          pass_image: imageFile ? `/uploads/${imageFile.filename}` : "",
         });
       }
     }
@@ -173,7 +173,7 @@ const updateVisa = async (req, res) => {
     const mainVisaFile = req.files["visa"]?.[0];
     if (mainVisaFile) {
       deleteLocalFile(booking.visa);
-      booking.visa = `${req.protocol}://${req.get("host")}/uploads/${mainVisaFile.filename}`;
+      booking.visa = `/uploads/${mainVisaFile.filename}`;
       booking.status = "completed";
     }
 
@@ -190,7 +190,7 @@ const updateVisa = async (req, res) => {
             deleteLocalFile(companion.visa);
           }
 
-          companion.visa = `${req.protocol}://${req.get("host")}/uploads/${companionVisaFile.filename}`;
+          companion.visa = `/uploads/${companionVisaFile.filename}`;
         }
       }
     }
