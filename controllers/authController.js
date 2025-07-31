@@ -62,7 +62,8 @@ const updatePassword = async (req, res) => {
 const changePassword = async (req, res) => {
   const token = req.query.token;
   const decode = jwt.verify(token, process.env.JWT_SECRET);
-  const user = await User.findOne({ _id: decode._id, tokens: token });
+  console.log(decode)
+  const user = await User.findOne({ _id: decode._id,   });
   if (!user) {
     return res.status(404).send({ message: "المستخدم غير موجود" });
   }
