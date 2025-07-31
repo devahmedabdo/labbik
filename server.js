@@ -22,8 +22,7 @@ const planRoutes = require("./routes/planRoutes");
 connectDB();
 
 // Global Middleware
-// app.use(cors({ origin: ['https://your-frontend.com'], credentials: true }));
-app.use(cors());
+app.use(cors({ origin: ['https://alabwaa.ly'], credentials: true }));
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
